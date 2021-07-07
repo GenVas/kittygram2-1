@@ -41,3 +41,9 @@ python3 manage.py migrate
 ```
 python3 manage.py runserver
 ```
+
+
+Откройте Kittygram, запустите сервер разработчика и перейдите на страницу с документацией в формате Swagger: http://127.0.0.1:8000/swagger/.
+
+Документация доступна и по этому адресу:
+http://127.0.0.1:8000/redoc/

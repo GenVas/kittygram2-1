@@ -30,6 +30,17 @@ class Cat(models.Model):
     def __str__(self):
         return self.name
 
+ 
+    
+    class Meta:
+        # как вариант для валидатора уникального значения в модели. 
+        # unique_together = ('name', 'owner',)
+        # Но Django предлагает следующее (Такую же проверку нужно реализовать и на уровне сериализатора.)
+        constraints = [models.UniqueConstraint(
+            fields=['name', 'owner'],
+            name='unique_name_together'
+            )
+        ]
 
 class AchievementCat(models.Model):
     achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)

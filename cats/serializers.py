@@ -5,6 +5,7 @@ import datetime as dt
 
 from .models import CHOICES, Achievement, AchievementCat, Cat, User
 
+UNIQUE_NAME_OWNER = 'Пара имя собственника и имя животного должны быть уникальными'
 
 class UserSerializer(serializers.ModelSerializer):
     cats = serializers.StringRelatedField(many=True, read_only=True)
@@ -27,11 +28,22 @@ class CatSerializer(serializers.ModelSerializer):
     achievements = AchievementSerializer(many=True, required=False)
     color = serializers.ChoiceField(choices=CHOICES)
     age = serializers.SerializerMethodField()
-    
+    owner = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault()) #указали read_only
+    # или через Meta (см ниже)
+
     class Meta:
         model = Cat
         fields = ('id', 'name', 'color', 'birth_year', 'achievements', 'owner',
                   'age')
+        read_only_fields = ('owner',)
+        # валидатор https://www.django-rest-framework.org/api-guide/validators/
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Cat.objects.all(),
+                fields=['name', 'owner'],
+                message=UNIQUE_NAME_OWNER
+            )        
+        ]
 
     def get_age(self, obj):
         return dt.datetime.now().year - obj.birth_year
@@ -49,3 +61,16 @@ class CatSerializer(serializers.ModelSerializer):
                 AchievementCat.objects.create(
                     achievement=current_achievement, cat=cat)
             return cat
+    
+    def validate_birth_year(self, value): # метод валидации поля должен начинаться с Validate_ noqa
+        year = dt.date.today().year
+        if not (year - 40 < value <= year):
+            raise serializers.ValidationError('Проверьте год рождения!')
+        return value
+    
+    def validate(self, data): # еще один метод валидации на совпадение полей
+        if data['color'] == data['name']:
+            raise serializers.ValidationError(
+                'Имя не может совпадать с цветом!')
+        return data
+
